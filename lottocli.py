@@ -30,6 +30,7 @@ def get_lotto_numbers(n, allow_duplicates=False):
         .str.replace("", "0")  # 빈 문자열을 0으로 대체
     )
 
+    # 숫자 이외의 문자 제거 후 float 형변환
     df["당첨 비율"] = (
         df["당첨 비율"].astype(str).str.replace(r"[^\d.]", "", regex=True).astype(float)
     )
@@ -41,15 +42,19 @@ def get_lotto_numbers(n, allow_duplicates=False):
     lotto_numbers = []
     available_numbers = valid_numbers.copy()
     while len(lotto_numbers) < n:
-        if allow_duplicates or len(available_numbers) < 6:
+        # 중복 허용 여부에 따라 로또 번호 추출
+        if allow_duplicates:
             numbers = np.random.choice(
                 valid_numbers, size=6, replace=True, p=weights / np.sum(weights)
-            )
+            ).tolist()
         else:
-            numbers = np.random.choice(available_numbers, size=6, replace=False)
+            if len(available_numbers) < 6:
+                available_numbers = valid_numbers.copy()  # 사용 가능한 번호 초기화
+            numbers = np.random.choice(available_numbers, size=6, replace=False).tolist()
             for num in numbers:
                 available_numbers.remove(num)
-        lotto_numbers.append(sorted(numbers.tolist()))  # 오름차순 정렬
+
+        lotto_numbers.append(numbers)  # 정렬하지 않고추가
 
     return lotto_numbers
 
@@ -68,7 +73,7 @@ if __name__ == "__main__":
             lotto_combinations = get_lotto_numbers(combinations, allow_duplicates)
 
             for i, numbers in enumerate(lotto_combinations):
-                print(f"{i+1}번째 조합: {numbers}")  # 이미 정렬되어 있으므로 sorted() 불필요
+                print(f"{i+1}번째 조합: {sorted(numbers)}")  # 오름차순 정렬하여 출력
 
         except ValueError as e:
             print(f"오류: {e}")
